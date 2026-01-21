@@ -2,7 +2,7 @@ Name: Osarenkhoe Osatohanmwen
 Matric Number: [Your Matric Number]
 Machine Learning Algorithm Used: Random Forest Classifier
 Model Persistence Method: Joblib
-Live URL: [Your deployed application URL - e.g., https://titanic-survival-app.onrender.com]
+Live URL: https://titanic-app-g0i1.onrender.com
 GitHub Repository: https://github.com/OsatohanmwenT/titanic_app.git
 
 ---
