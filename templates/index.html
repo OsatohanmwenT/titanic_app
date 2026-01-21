@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Titanic Survival Prediction System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Header Section -->
+        <header class="header">
+            <div class="header-content">
+                <div class="ship-icon">🚢</div>
+                <h1 class="title">Titanic Survival Prediction</h1>
+                <p class="subtitle">Predict passenger survival using Machine Learning</p>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Input Form -->
+            <div class="card form-card">
+                <h2 class="card-title">Passenger Information</h2>
+                <form id="predictionForm">
+                    <!-- Passenger Class -->
+                    <div class="form-group">
+                        <label for="pclass">Passenger Class</label>
+                        <select id="pclass" name="pclass" required>
+                            <option value="">Select Class</option>
+                            <option value="1">1st Class (Upper)</option>
+                            <option value="2">2nd Class (Middle)</option>
+                            <option value="3">3rd Class (Lower)</option>
+                        </select>
+                    </div>
+
+                    <!-- Gender -->
+                    <div class="form-group">
+                        <label for="sex">Gender</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="sex" value="male" required>
+                                <span class="radio-custom"></span>
+                                Male
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="sex" value="female" required>
+                                <span class="radio-custom"></span>
+                                Female
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Age -->
+                    <div class="form-group">
+                        <label for="age">Age</label>
+                        <input type="number" id="age" name="age" min="0" max="100" step="1" placeholder="Enter age" required>
+                    </div>
+
+                    <!-- Fare -->
+                    <div class="form-group">
+                        <label for="fare">Fare (£)</label>
+                        <input type="number" id="fare" name="fare" min="0" step="0.01" placeholder="Enter ticket fare" required>
+                    </div>
+
+                    <!-- Port of Embarkation -->
+                    <div class="form-group">
+                        <label for="embarked">Port of Embarkation</label>
+                        <select id="embarked" name="embarked" required>
+                            <option value="">Select Port</option>
+                            <option value="C">Cherbourg (C)</option>
+                            <option value="Q">Queenstown (Q)</option>
+                            <option value="S">Southampton (S)</option>
+                        </select>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="btn-predict" id="predictBtn">
+                        <span class="btn-text">Predict Survival</span>
+                        <span class="btn-loader" style="display: none;">
+                            <div class="spinner"></div>
+                        </span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Results Card -->
+            <div class="card result-card" id="resultCard" style="display: none;">
+                <h2 class="card-title">Prediction Result</h2>
+                
+                <div class="result-content">
+                    <div class="result-icon" id="resultIcon">
+                        <!-- Icon will be inserted here -->
+                    </div>
+                    
+                    <div class="result-message" id="resultMessage">
+                        <!-- Result message will be inserted here -->
+                    </div>
+                    
+                    <div class="probability-container">
+                        <div class="probability-bar">
+                            <div class="probability-label">
+                                <span>Survival Probability</span>
+                                <span id="survivalProb" class="prob-value">0%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill survival" id="survivalBar"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="probability-bar">
+                            <div class="probability-label">
+                                <span>Death Probability</span>
+                                <span id="deathProb" class="prob-value">0%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill death" id="deathBar"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Built with Random Forest Classifier | Model Accuracy: ~82%</p>
+            <p class="footer-note">Dataset: Titanic - Machine Learning from Disaster</p>
+        </footer>
+    </div>
+
+    <script>
+        const form = document.getElementById('predictionForm');
+        const resultCard = document.getElementById('resultCard');
+        const predictBtn = document.getElementById('predictBtn');
+        const btnText = predictBtn.querySelector('.btn-text');
+        const btnLoader = predictBtn.querySelector('.btn-loader');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Show loading state
+            btnText.style.display = 'none';
+            btnLoader.style.display = 'flex';
+            predictBtn.disabled = true;
+            resultCard.style.display = 'none';
+
+            // Get form data
+            const formData = new FormData(form);
+            const data = {
+                pclass: formData.get('pclass'),
+                sex: formData.get('sex'),
+                age: formData.get('age'),
+                fare: formData.get('fare'),
+                embarked: formData.get('embarked')
+            };
+
+            try {
+                // Make prediction request
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    displayResult(result);
+                } else {
+                    alert('Error: ' + (result.error || 'Something went wrong'));
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            } finally {
+                // Reset button state
+                btnText.style.display = 'block';
+                btnLoader.style.display = 'none';
+                predictBtn.disabled = false;
+            }
+        });
+
+        function displayResult(result) {
+            const resultIcon = document.getElementById('resultIcon');
+            const resultMessage = document.getElementById('resultMessage');
+            const survivalProb = document.getElementById('survivalProb');
+            const deathProb = document.getElementById('deathProb');
+            const survivalBar = document.getElementById('survivalBar');
+            const deathBar = document.getElementById('deathBar');
+
+            // Set icon and message
+            if (result.prediction === 1) {
+                resultIcon.innerHTML = '<div class="icon-survived">✓</div>';
+                resultMessage.innerHTML = '<h3 class="survived-text">Passenger Survived</h3><p>The model predicts this passenger would have survived the Titanic disaster.</p>';
+            } else {
+                resultIcon.innerHTML = '<div class="icon-died">✕</div>';
+                resultMessage.innerHTML = '<h3 class="died-text">Passenger Did Not Survive</h3><p>The model predicts this passenger would not have survived the Titanic disaster.</p>';
+            }
+
+            // Set probabilities
+            survivalProb.textContent = result.survival_probability.toFixed(1) + '%';
+            deathProb.textContent = result.death_probability.toFixed(1) + '%';
+            
+            // Animate progress bars
+            setTimeout(() => {
+                survivalBar.style.width = result.survival_probability + '%';
+                deathBar.style.width = result.death_probability + '%';
+            }, 100);
+
+            // Show result card with animation
+            resultCard.style.display = 'block';
+            setTimeout(() => {
+                resultCard.classList.add('show');
+            }, 10);
+        }
+    </script>
+</body>
+</html>
